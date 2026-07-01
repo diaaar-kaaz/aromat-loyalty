@@ -1,12 +1,79 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Customer, LEVELS, calcEarnedBonus, formatPhone } from '@/lib/supabase'
 import Link from 'next/link'
 
 type Step = 'search' | 'found' | 'done'
 
+function PinScreen({ onAuth }: { onAuth: () => void }) {
+  const [pin, setPin] = useState('')
+  const [error, setError] = useState('')
+  const [loading, setLoading] = useState(false)
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault()
+    setLoading(true)
+    setError('')
+    const res = await fetch('/api/cashier/auth', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ pin }),
+    })
+    setLoading(false)
+    if (!res.ok) { setError('Неверный PIN'); setPin(''); return }
+    sessionStorage.setItem('cashier_authed', '1')
+    onAuth()
+  }
+
+  return (
+    <div className="min-h-screen flex flex-col items-center justify-center p-4" style={{ background: 'linear-gradient(160deg, #2C1810, #C46245)' }}>
+      <div className="text-4xl mb-4">🔒</div>
+      <form onSubmit={handleSubmit} className="bg-white rounded-3xl p-6 shadow-xl w-full max-w-xs space-y-4">
+        <div>
+          <p className="text-xl font-extrabold text-[#2C1810]">Касса</p>
+          <p className="text-sm text-gray-400">Введите PIN-код сотрудника</p>
+        </div>
+        <input
+          type="password"
+          inputMode="numeric"
+          placeholder="PIN"
+          value={pin}
+          onChange={e => { setPin(e.target.value); setError('') }}
+          maxLength={8}
+          autoFocus
+          className="w-full bg-gray-50 border border-gray-100 rounded-2xl px-4 py-3.5 text-center text-2xl font-bold tracking-widest focus:outline-none focus:border-[#C46245]"
+        />
+        {error && <p className="text-sm text-red-500 text-center">{error}</p>}
+        <button
+          type="submit"
+          disabled={loading || !pin}
+          className="w-full py-4 rounded-2xl font-bold text-white disabled:opacity-50"
+          style={{ background: 'linear-gradient(135deg, #C46245, #E8956D)' }}
+        >
+          {loading ? 'Проверка...' : 'Войти'}
+        </button>
+      </form>
+    </div>
+  )
+}
+
 export default function CashierPage() {
+  const [authed, setAuthed] = useState(false)
+  const [checkingAuth, setCheckingAuth] = useState(true)
+
+  useEffect(() => {
+    if (sessionStorage.getItem('cashier_authed') === '1') setAuthed(true)
+    setCheckingAuth(false)
+  }, [])
+
+  if (checkingAuth) return null
+  if (!authed) return <PinScreen onAuth={() => setAuthed(true)} />
+
+  return <CashierPanel />
+}
+
+function CashierPanel() {
   const [phone, setPhone] = useState('')
   const [customer, setCustomer] = useState<Customer | null>(null)
   const [orderAmount, setOrderAmount] = useState('')
