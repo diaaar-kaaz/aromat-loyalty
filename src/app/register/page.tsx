@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { LEVELS } from '@/lib/supabase'
+import BottomNav from '@/components/BottomNav'
 
 type Step = 'form' | 'success'
 
@@ -33,11 +34,12 @@ export default function RegisterPage() {
     setLoading(false)
     if (res.status === 409) { setError('Этот номер уже зарегистрирован'); return }
     if (!res.ok) { setError('Ошибка. Попробуйте снова.'); return }
+    localStorage.setItem('my_phone', phone.replace(/\D/g, ''))
     setStep('success')
   }
 
   return (
-    <div className="min-h-screen bg-cream flex flex-col">
+    <div className="min-h-screen bg-cream flex flex-col pb-24">
       {/* Header */}
       <div className="relative overflow-hidden px-4 pt-10 pb-8 text-white" style={{ background: 'linear-gradient(160deg, #2C1810, #C46245)' }}>
         <div className="absolute -right-8 -top-8 w-40 h-40 rounded-full bg-white/5" />
@@ -143,6 +145,7 @@ export default function RegisterPage() {
           </div>
         )}
       </main>
+      <BottomNav />
     </div>
   )
 }

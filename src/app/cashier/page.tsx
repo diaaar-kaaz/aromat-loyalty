@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { Customer, LEVELS, calcEarnedBonus, formatPhone } from '@/lib/supabase'
 import Link from 'next/link'
+import BottomNav from '@/components/BottomNav'
 
 type Step = 'search' | 'found' | 'done'
 
@@ -27,7 +28,7 @@ function PinScreen({ onAuth }: { onAuth: () => void }) {
   }
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center p-4" style={{ background: 'linear-gradient(160deg, #2C1810, #C46245)' }}>
+    <div className="min-h-screen flex flex-col items-center justify-center p-4 pb-24" style={{ background: 'linear-gradient(160deg, #2C1810, #C46245)' }}>
       <div className="text-4xl mb-4">🔒</div>
       <form onSubmit={handleSubmit} className="bg-white rounded-3xl p-6 shadow-xl w-full max-w-xs space-y-4">
         <div>
@@ -54,6 +55,7 @@ function PinScreen({ onAuth }: { onAuth: () => void }) {
           {loading ? 'Проверка...' : 'Войти'}
         </button>
       </form>
+      <BottomNav />
     </div>
   )
 }
@@ -119,7 +121,7 @@ function CashierPanel() {
   }
 
   return (
-    <div className="min-h-screen bg-cream flex flex-col">
+    <div className="min-h-screen bg-cream flex flex-col pb-20">
       {/* Header */}
       <header className="px-4 pt-safe py-4 flex items-center justify-between" style={{ background: 'linear-gradient(135deg, #2C1810, #C46245)' }}>
         <div className="flex items-center gap-3">
@@ -298,6 +300,7 @@ function CashierPanel() {
           </div>
         )}
       </main>
+      <BottomNav />
     </div>
   )
 }
