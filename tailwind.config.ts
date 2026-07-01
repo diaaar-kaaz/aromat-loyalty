@@ -9,8 +9,18 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        background: "var(--background)",
-        foreground: "var(--foreground)",
+        aromat: {
+          DEFAULT: "#C46245",
+          dark: "#A84F35",
+          light: "#D9846A",
+        },
+        cream: {
+          DEFAULT: "#FDF8F4",
+          dark: "#F5EDE4",
+        },
+      },
+      fontFamily: {
+        sans: ["Manrope", "sans-serif"],
       },
     },
   },
