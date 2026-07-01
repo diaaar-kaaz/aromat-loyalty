@@ -4,7 +4,7 @@ import { useState } from 'react'
 import { Customer, LEVELS, calcEarnedBonus, formatPhone } from '@/lib/supabase'
 import Link from 'next/link'
 
-type Step = 'search' | 'found' | 'confirm' | 'done'
+type Step = 'search' | 'found' | 'done'
 
 export default function CashierPage() {
   const [phone, setPhone] = useState('')
@@ -12,7 +12,7 @@ export default function CashierPage() {
   const [orderAmount, setOrderAmount] = useState('')
   const [spendBonus, setSpendBonus] = useState(false)
   const [step, setStep] = useState<Step>('search')
-  const [result, setResult] = useState<{ earned: number; spent: number; new_balance: number } | null>(null)
+  const [result, setResult] = useState<{ earned: number; spent: number; new_balance: number; new_level: string } | null>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
 
@@ -27,12 +27,8 @@ export default function CashierPage() {
     setError('')
     const res = await fetch(`/api/customers?phone=${phone.replace(/\D/g, '')}`)
     setLoading(false)
-    if (res.status === 404) {
-      setError('not_found')
-      return
-    }
-    const data = await res.json()
-    setCustomer(data)
+    if (res.status === 404) { setError('not_found'); return }
+    setCustomer(await res.json())
     setStep('found')
   }
 
@@ -42,138 +38,141 @@ export default function CashierPage() {
     const res = await fetch('/api/transactions', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        customer_id: customer.id,
-        order_amount: amount,
-        spend_bonus: spendBonus ? maxSpend : 0,
-      }),
+      body: JSON.stringify({ customer_id: customer.id, order_amount: amount, spend_bonus: spendBonus ? maxSpend : 0 }),
     })
     setLoading(false)
     if (!res.ok) return
-    const data = await res.json()
-    setResult(data)
+    setResult(await res.json())
     setStep('done')
   }
 
   function reset() {
-    setPhone('')
-    setCustomer(null)
-    setOrderAmount('')
-    setSpendBonus(false)
-    setStep('search')
-    setResult(null)
-    setError('')
+    setPhone(''); setCustomer(null); setOrderAmount('')
+    setSpendBonus(false); setStep('search'); setResult(null); setError('')
   }
 
   return (
     <div className="min-h-screen bg-cream flex flex-col">
       {/* Header */}
-      <header className="bg-aromat text-white px-4 py-4 flex items-center justify-between">
-        <div>
-          <h1 className="text-xl font-bold tracking-wide">AROMAT</h1>
-          <p className="text-xs opacity-80">Панель кассира</p>
+      <header className="px-4 pt-safe py-4 flex items-center justify-between" style={{ background: 'linear-gradient(135deg, #2C1810, #C46245)' }}>
+        <div className="flex items-center gap-3">
+          <div className="w-9 h-9 bg-white/20 rounded-xl flex items-center justify-center text-lg">🍞</div>
+          <div>
+            <p className="text-white font-bold text-base leading-none">AROMAT</p>
+            <p className="text-white/60 text-xs">Касса</p>
+          </div>
         </div>
-        <Link href="/admin" className="text-xs opacity-70 hover:opacity-100 border border-white/40 px-2 py-1 rounded">
+        <Link href="/admin" className="text-white/50 text-xs border border-white/20 px-3 py-1.5 rounded-lg hover:text-white/80">
           Админ
         </Link>
       </header>
 
       <main className="flex-1 p-4 max-w-md mx-auto w-full">
 
-        {/* STEP: SEARCH */}
+        {/* SEARCH */}
         {step === 'search' && (
           <div className="mt-6 space-y-4">
-            <h2 className="text-lg font-semibold text-center text-[#2C1810]">
-              Найти клиента
-            </h2>
-            <div className="bg-white rounded-2xl p-4 shadow-sm space-y-3">
-              <label className="text-sm font-medium text-gray-600">Номер телефона</label>
-              <input
-                type="tel"
-                placeholder="+7 777 123 45 67"
-                value={phone}
-                onChange={e => { setPhone(e.target.value); setError('') }}
-                onKeyDown={e => e.key === 'Enter' && handleSearch()}
-                className="w-full border border-gray-200 rounded-xl px-4 py-3 text-lg focus:outline-none focus:border-aromat"
-              />
+            <h2 className="text-xl font-bold text-[#2C1810]">Найти клиента</h2>
+
+            <div className="bg-white rounded-3xl p-5 shadow-sm space-y-4">
+              <div className="relative">
+                <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-300 text-lg">📱</span>
+                <input
+                  type="tel"
+                  placeholder="+7 777 123 45 67"
+                  value={phone}
+                  onChange={e => { setPhone(e.target.value); setError('') }}
+                  onKeyDown={e => e.key === 'Enter' && handleSearch()}
+                  className="w-full pl-11 pr-4 py-3.5 border border-gray-100 rounded-2xl text-base focus:outline-none focus:border-aromat bg-gray-50"
+                />
+              </div>
+
               {error === 'not_found' && (
-                <div className="bg-red-50 rounded-xl p-3 text-sm text-red-600">
-                  Клиент не найден.{' '}
-                  <Link href="/register" className="font-semibold underline">Зарегистрировать?</Link>
+                <div className="flex items-center gap-3 bg-red-50 rounded-2xl p-3.5">
+                  <span>😕</span>
+                  <div className="text-sm">
+                    <p className="text-red-600 font-medium">Клиент не найден</p>
+                    <Link href="/register" className="text-aromat underline text-xs">Зарегистрировать?</Link>
+                  </div>
                 </div>
               )}
+
               <button
                 onClick={handleSearch}
                 disabled={loading || !phone}
-                className="w-full bg-aromat text-white rounded-xl py-3 font-semibold text-base disabled:opacity-50"
+                className="w-full py-4 rounded-2xl font-bold text-white text-base disabled:opacity-40 transition-opacity"
+                style={{ background: 'linear-gradient(135deg, #C46245, #E8956D)' }}
               >
-                {loading ? 'Поиск...' : 'Найти'}
+                {loading ? 'Поиск...' : 'Найти клиента'}
               </button>
             </div>
-            <div className="text-center">
-              <Link href="/register" className="text-sm text-aromat font-medium">
-                + Зарегистрировать нового клиента
-              </Link>
-            </div>
+
+            <Link href="/register" className="flex items-center justify-center gap-2 text-aromat text-sm font-semibold py-3">
+              <span className="text-lg">+</span> Новый клиент
+            </Link>
           </div>
         )}
 
-        {/* STEP: FOUND */}
+        {/* FOUND */}
         {step === 'found' && customer && level && (
-          <div className="mt-6 space-y-4">
+          <div className="mt-4 space-y-3">
             {/* Customer card */}
-            <div className="bg-white rounded-2xl p-4 shadow-sm">
-              <div className="flex items-center gap-3 mb-3">
-                <div className="w-12 h-12 rounded-full bg-cream-dark flex items-center justify-center text-xl font-bold text-aromat">
-                  {customer.name[0].toUpperCase()}
+            <div className="rounded-3xl p-5 text-white shadow-lg" style={{ background: `linear-gradient(135deg, ${level.color}dd, ${level.color})` }}>
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-3">
+                  <div className="w-12 h-12 rounded-2xl bg-white/25 flex items-center justify-center text-xl font-bold">
+                    {customer.name[0].toUpperCase()}
+                  </div>
+                  <div>
+                    <p className="font-bold text-lg leading-tight">{customer.name}</p>
+                    <p className="text-white/70 text-xs">{formatPhone(customer.phone)}</p>
+                  </div>
                 </div>
-                <div>
-                  <p className="font-bold text-lg">{customer.name}</p>
-                  <p className="text-sm text-gray-500">{formatPhone(customer.phone)}</p>
-                </div>
-                <div
-                  className="ml-auto px-3 py-1 rounded-full text-xs font-bold text-white"
-                  style={{ backgroundColor: level.color }}
-                >
-                  {level.label}
+                <div className="text-right">
+                  <p className="text-white/60 text-xs">Уровень</p>
+                  <p className="font-bold text-sm">{level.label}</p>
                 </div>
               </div>
-              <div className="bg-cream rounded-xl p-3 flex justify-between items-center">
-                <span className="text-sm text-gray-600">Баланс баллов</span>
-                <span className="text-2xl font-bold text-aromat">{customer.bonus_balance}</span>
+              <div className="bg-white/20 rounded-2xl p-4 text-center">
+                <p className="text-white/70 text-xs mb-1">Баланс баллов</p>
+                <p className="text-4xl font-extrabold">{customer.bonus_balance}</p>
               </div>
             </div>
 
-            {/* Order amount */}
-            <div className="bg-white rounded-2xl p-4 shadow-sm space-y-3">
-              <label className="text-sm font-medium text-gray-600">Сумма чека (тг)</label>
-              <input
-                type="number"
-                placeholder="0"
-                value={orderAmount}
-                onChange={e => setOrderAmount(e.target.value)}
-                className="w-full border border-gray-200 rounded-xl px-4 py-3 text-2xl font-bold focus:outline-none focus:border-aromat"
-              />
+            {/* Amount input */}
+            <div className="bg-white rounded-3xl p-5 shadow-sm space-y-4">
+              <p className="font-bold text-[#2C1810]">Сумма чека</p>
+              <div className="relative">
+                <input
+                  type="number"
+                  placeholder="0"
+                  value={orderAmount}
+                  onChange={e => setOrderAmount(e.target.value)}
+                  className="w-full pr-12 pl-4 py-4 text-3xl font-extrabold border border-gray-100 rounded-2xl focus:outline-none focus:border-aromat bg-gray-50 text-[#2C1810]"
+                />
+                <span className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-300 font-bold">тг</span>
+              </div>
 
               {amount > 0 && (
                 <div className="space-y-2">
-                  <div className="flex justify-between text-sm">
-                    <span className="text-gray-500">Начислится баллов (+{level.percent}%)</span>
-                    <span className="font-semibold text-green-600">+{earnedPreview} бонусов</span>
+                  <div className="flex justify-between items-center px-1">
+                    <span className="text-sm text-gray-500">Начислится (+{level.percent}%)</span>
+                    <span className="font-bold text-green-600 text-base">+{earnedPreview} ₿</span>
                   </div>
 
                   {customer.bonus_balance > 0 && (
-                    <label className="flex items-center gap-3 bg-cream rounded-xl p-3 cursor-pointer">
+                    <label className="flex items-center gap-3 bg-orange-50 border border-orange-100 rounded-2xl p-4 cursor-pointer">
                       <input
                         type="checkbox"
                         checked={spendBonus}
                         onChange={e => setSpendBonus(e.target.checked)}
-                        className="w-5 h-5 accent-aromat"
+                        className="w-5 h-5 rounded accent-aromat"
                       />
-                      <div>
-                        <p className="text-sm font-medium">Списать баллы (до 20% чека)</p>
-                        <p className="text-xs text-gray-500">Скидка {maxSpend} тг</p>
+                      <div className="flex-1">
+                        <p className="text-sm font-semibold text-[#2C1810]">Списать баллы</p>
+                        <p className="text-xs text-gray-500">Скидка {maxSpend} тг (до 20% чека)</p>
                       </div>
+                      <span className="text-aromat font-bold text-sm">−{maxSpend}</span>
                     </label>
                   )}
                 </div>
@@ -181,44 +180,52 @@ export default function CashierPage() {
             </div>
 
             <div className="flex gap-3">
-              <button onClick={reset} className="flex-1 border border-gray-200 rounded-xl py-3 font-medium text-gray-600">
-                Назад
+              <button onClick={reset} className="w-14 h-14 rounded-2xl border border-gray-200 text-gray-400 text-xl flex items-center justify-center hover:bg-gray-50">
+                ←
               </button>
               <button
                 onClick={handleConfirm}
                 disabled={!amount || loading}
-                className="flex-2 bg-aromat text-white rounded-xl py-3 px-6 font-semibold disabled:opacity-50"
+                className="flex-1 py-4 rounded-2xl font-bold text-white text-base disabled:opacity-40"
+                style={{ background: 'linear-gradient(135deg, #C46245, #E8956D)' }}
               >
-                {loading ? 'Сохранение...' : 'Подтвердить'}
+                {loading ? 'Сохранение...' : `Подтвердить • ${amount ? amount.toLocaleString() : 0} тг`}
               </button>
             </div>
           </div>
         )}
 
-        {/* STEP: DONE */}
+        {/* DONE */}
         {step === 'done' && result && (
-          <div className="mt-6 space-y-4 text-center">
-            <div className="text-5xl">✓</div>
-            <h2 className="text-xl font-bold text-[#2C1810]">Готово! Рахмет!</h2>
+          <div className="mt-8 space-y-4">
+            <div className="text-center">
+              <div className="w-20 h-20 rounded-full bg-green-100 flex items-center justify-center text-4xl mx-auto mb-4">✓</div>
+              <h2 className="text-2xl font-extrabold text-[#2C1810]">Готово!</h2>
+              <p className="text-gray-400 text-sm mt-1">Рахмет!</p>
+            </div>
 
-            <div className="bg-white rounded-2xl p-5 shadow-sm space-y-3 text-left">
+            <div className="bg-white rounded-3xl p-5 shadow-sm space-y-3">
               {result.spent > 0 && (
-                <div className="flex justify-between">
-                  <span className="text-gray-500">Списано баллов</span>
-                  <span className="font-bold text-red-500">−{result.spent}</span>
+                <div className="flex justify-between items-center py-2 border-b border-gray-50">
+                  <span className="text-gray-500 text-sm">Списано баллов</span>
+                  <span className="font-bold text-red-400 text-lg">−{result.spent}</span>
                 </div>
               )}
-              <div className="flex justify-between">
-                <span className="text-gray-500">Начислено баллов</span>
-                <span className="font-bold text-green-600">+{result.earned}</span>
+              <div className="flex justify-between items-center py-2 border-b border-gray-50">
+                <span className="text-gray-500 text-sm">Начислено баллов</span>
+                <span className="font-bold text-green-500 text-lg">+{result.earned}</span>
               </div>
-              <div className="border-t pt-3 flex justify-between">
-                <span className="font-medium">Новый баланс</span>
-                <span className="text-xl font-bold text-aromat">{result.new_balance}</span>
+              <div className="flex justify-between items-center pt-2">
+                <span className="font-semibold text-[#2C1810]">Новый баланс</span>
+                <span className="text-3xl font-extrabold text-aromat">{result.new_balance}</span>
               </div>
             </div>
 
-            <button onClick={reset} className="w-full bg-aromat text-white rounded-xl py-3 font-semibold text-base">
+            <button
+              onClick={reset}
+              className="w-full py-4 rounded-2xl font-bold text-white text-base"
+              style={{ background: 'linear-gradient(135deg, #C46245, #E8956D)' }}
+            >
               Новый чек
             </button>
           </div>
