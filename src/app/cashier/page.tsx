@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Customer, LEVELS, calcEarnedBonus, formatPhone } from '@/lib/supabase'
+import { Customer, LEVELS, calcEarnedBonus, formatPhone, STAMP_CARDS, stampRewardReady } from '@/lib/supabase'
 import Link from 'next/link'
 import BottomNav from '@/components/BottomNav'
 
@@ -83,6 +83,7 @@ function CashierPanel() {
   const [step, setStep] = useState<Step>('search')
   const [result, setResult] = useState<{ earned: number; spent: number; new_balance: number; new_level: string } | null>(null)
   const [loading, setLoading] = useState(false)
+  const [stampLoading, setStampLoading] = useState(false)
   const [error, setError] = useState('')
 
   const amount = parseInt(orderAmount) || 0
@@ -113,6 +114,18 @@ function CashierPanel() {
     if (!res.ok) return
     setResult(await res.json())
     setStep('done')
+  }
+
+  async function handleStamp(action: 'add' | 'redeem') {
+    if (!customer) return
+    setStampLoading(true)
+    const res = await fetch(`/api/customers/${customer.id}/stamp`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action }),
+    })
+    setStampLoading(false)
+    if (res.ok) setCustomer(await res.json())
   }
 
   function reset() {
@@ -207,6 +220,49 @@ function CashierPanel() {
                 <p className="text-4xl font-extrabold">{customer.bonus_balance}</p>
               </div>
             </div>
+
+            {/* Stamp card */}
+            {customer.stamp_category && STAMP_CARDS[customer.stamp_category] && (() => {
+              const conf = STAMP_CARDS[customer.stamp_category]
+              const count = customer.stamp_count ?? 0
+              const ready = stampRewardReady(customer.stamp_category, count)
+              return (
+                <div className="bg-white rounded-3xl p-5 shadow-sm space-y-3">
+                  <div className="flex items-center gap-2">
+                    <span className="text-2xl">{conf.icon}</span>
+                    <div>
+                      <p className="font-bold text-[#2C1810] text-sm">Карта «{conf.label}»</p>
+                      <p className="text-xs" style={{ color: ready ? '#16a34a' : '#9ca3af' }}>
+                        {ready ? 'Подарок готов! 🎁' : `${Math.min(count, conf.target)}/${conf.target} — ${conf.target + 1}-й в подарок`}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex flex-wrap gap-2">
+                    {Array.from({ length: conf.target }).map((_, i) => (
+                      <div key={i} className="w-8 h-8 rounded-full flex items-center justify-center text-sm"
+                        style={{ background: i < count ? '#C46245' : '#f0e6e0' }}>
+                        {i < count ? conf.icon : ''}
+                      </div>
+                    ))}
+                    <div className="w-8 h-8 rounded-full flex items-center justify-center text-sm"
+                      style={{ background: ready ? '#16a34a' : '#f0e6e0' }}>🎁</div>
+                  </div>
+
+                  {ready ? (
+                    <button onClick={() => handleStamp('redeem')} disabled={stampLoading}
+                      className="w-full py-3 rounded-2xl font-bold text-white disabled:opacity-40" style={{ background: '#16a34a' }}>
+                      {stampLoading ? '...' : `🎁 Выдать подарок (${conf.label})`}
+                    </button>
+                  ) : (
+                    <button onClick={() => handleStamp('add')} disabled={stampLoading}
+                      className="w-full py-3 rounded-2xl font-bold text-aromat bg-orange-50 border border-orange-100 disabled:opacity-40">
+                      {stampLoading ? '...' : `Поставить штамп ${conf.icon}`}
+                    </button>
+                  )}
+                </div>
+              )
+            })()}
 
             {/* Amount input */}
             <div className="bg-white rounded-3xl p-5 shadow-sm space-y-4">
