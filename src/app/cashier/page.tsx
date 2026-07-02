@@ -84,6 +84,7 @@ function CashierPanel() {
   const [result, setResult] = useState<{ earned: number; spent: number; new_balance: number; new_level: string } | null>(null)
   const [loading, setLoading] = useState(false)
   const [stampLoading, setStampLoading] = useState(false)
+  const [confirmingDelete, setConfirmingDelete] = useState(false)
   const [error, setError] = useState('')
 
   const amount = parseInt(orderAmount) || 0
@@ -128,9 +129,18 @@ function CashierPanel() {
     if (res.ok) setCustomer(await res.json())
   }
 
+  async function handleDelete() {
+    if (!customer) return
+    setLoading(true)
+    const res = await fetch(`/api/customers/${customer.id}`, { method: 'DELETE' })
+    setLoading(false)
+    if (res.ok) reset()
+  }
+
   function reset() {
     setPhone(''); setCustomer(null); setOrderAmount('')
     setSpendBonus(false); setStep('search'); setResult(null); setError('')
+    setConfirmingDelete(false)
   }
 
   return (
@@ -317,6 +327,37 @@ function CashierPanel() {
                 {loading ? 'Сохранение...' : `Подтвердить • ${amount ? amount.toLocaleString() : 0} тг`}
               </button>
             </div>
+
+            {/* Delete customer (cashier only) */}
+            {!confirmingDelete ? (
+              <button
+                onClick={() => setConfirmingDelete(true)}
+                className="w-full text-center text-red-400 text-sm py-2 hover:text-red-500"
+              >
+                Удалить клиента
+              </button>
+            ) : (
+              <div className="bg-red-50 border border-red-100 rounded-2xl p-4 space-y-3">
+                <p className="text-sm text-red-600 font-medium text-center">
+                  Удалить «{customer.name}» и всю историю? Это необратимо.
+                </p>
+                <div className="flex gap-3">
+                  <button
+                    onClick={() => setConfirmingDelete(false)}
+                    className="flex-1 py-3 rounded-2xl border border-gray-200 text-gray-500 font-semibold"
+                  >
+                    Отмена
+                  </button>
+                  <button
+                    onClick={handleDelete}
+                    disabled={loading}
+                    className="flex-1 py-3 rounded-2xl bg-red-500 text-white font-bold disabled:opacity-40"
+                  >
+                    {loading ? 'Удаление...' : 'Удалить'}
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         )}
 
