@@ -2,8 +2,10 @@ import { NextRequest, NextResponse } from 'next/server'
 import { supabase } from '@/lib/supabase'
 
 // Supabase queries use fetch under the hood, which Next.js caches by default.
-// Force dynamic so transaction history is always read fresh from the DB.
+// Force fully dynamic + no fetch caching so history is always read fresh from the DB.
 export const dynamic = 'force-dynamic'
+export const fetchCache = 'force-no-store'
+export const revalidate = 0
 
 export async function GET(
   req: NextRequest,
