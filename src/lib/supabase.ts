@@ -19,6 +19,8 @@ export const supabase = new Proxy({} as SupabaseClient, {
   },
 })
 
+export type StampCategory = 'coffee' | 'pastry' | 'dessert'
+
 export type Customer = {
   id: string
   phone: string
@@ -26,7 +28,25 @@ export type Customer = {
   level: 'nan' | 'kumis' | 'altyn' | 'vip'
   total_spent: number
   bonus_balance: number
+  stamp_category: StampCategory | null
+  stamp_count: number
   created_at: string
+}
+
+// Punch-card config. target = stamps to collect; the (target+1)-th item is free.
+export const STAMP_CARDS: Record<StampCategory, { icon: string; label: string; labelKz: string; target: number }> = {
+  coffee:  { icon: '☕', label: 'Кофе',    labelKz: 'Кофе',   target: 6 },
+  pastry:  { icon: '🥐', label: 'Выпечка', labelKz: 'Тоқаш',  target: 8 },
+  dessert: { icon: '🍰', label: 'Десерт',  labelKz: 'Десерт', target: 8 },
+}
+
+export function isStampCategory(v: unknown): v is StampCategory {
+  return v === 'coffee' || v === 'pastry' || v === 'dessert'
+}
+
+export function stampRewardReady(category: StampCategory | null, count: number): boolean {
+  if (!category) return false
+  return count >= STAMP_CARDS[category].target
 }
 
 export type BonusTransaction = {

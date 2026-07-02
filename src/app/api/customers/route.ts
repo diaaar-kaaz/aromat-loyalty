@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { supabase } from '@/lib/supabase'
+import { supabase, isStampCategory } from '@/lib/supabase'
 
 export async function GET(req: NextRequest) {
   const phone = req.nextUrl.searchParams.get('phone')
@@ -17,13 +17,20 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
-  const { phone, name } = await req.json()
+  const { phone, name, stamp_category } = await req.json()
   if (!phone || !name) return NextResponse.json({ error: 'phone and name required' }, { status: 400 })
+
+  // Chosen at registration only. First stamp is free (start at 1) as an acquisition hook.
+  const category = isStampCategory(stamp_category) ? stamp_category : null
+  const stampCount = category ? 1 : 0
 
   const digits = phone.replace(/\D/g, '')
   const { data, error } = await supabase
     .from('customers')
-    .insert({ phone: digits, name, level: 'nan', total_spent: 0, bonus_balance: 0 })
+    .insert({
+      phone: digits, name, level: 'nan', total_spent: 0, bonus_balance: 0,
+      stamp_category: category, stamp_count: stampCount,
+    })
     .select()
     .single()
 
