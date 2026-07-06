@@ -1,0 +1,12 @@
+[
+  {
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "kz.aromat.loyalty",
+      "sha256_cert_fingerprints": [
+        "1D:97:99:88:4A:C2:73:4E:EC:B4:EE:F3:0A:83:4A:00:A7:55:36:03:40:3E:CF:8C:D9:D5:C5:72:1A:3E:AF:22"
+      ]
+    }
+  }
+]
