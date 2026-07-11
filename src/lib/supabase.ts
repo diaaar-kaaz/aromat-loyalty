@@ -59,10 +59,10 @@ export type BonusTransaction = {
 }
 
 export const LEVELS = {
-  nan:   { label: 'Нан',          labelKz: 'Нан',     threshold: 0,       percent: 3,  color: '#8B7355' },
-  kumis: { label: 'Күміс',        labelKz: 'Күміс',   threshold: 20000,   percent: 5,  color: '#A8A9AD' },
-  altyn: { label: 'Алтын',        labelKz: 'Алтын',   threshold: 50000,   percent: 7,  color: '#C9A84C' },
-  vip:   { label: 'VIP Aromat',   labelKz: 'VIP',     threshold: 100000,  percent: 10, color: '#C46245' },
+  nan:   { label: 'Нан',          labelKz: 'Нан',     threshold: 0,       percent: 1,  color: '#8B7355' },
+  kumis: { label: 'Күміс',        labelKz: 'Күміс',   threshold: 20000,   percent: 2,  color: '#A8A9AD' },
+  altyn: { label: 'Алтын',        labelKz: 'Алтын',   threshold: 50000,   percent: 3,  color: '#C9A84C' },
+  vip:   { label: 'VIP Aromat',   labelKz: 'VIP',     threshold: 100000,  percent: 5,  color: '#C46245' },
 }
 
 export function getLevel(totalSpent: number): Customer['level'] {

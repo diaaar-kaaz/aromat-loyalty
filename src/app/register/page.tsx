@@ -125,7 +125,7 @@ export default function RegisterPage() {
                   <span className="text-2xl">🍞</span>
                   <span className="text-xl font-extrabold">Нан</span>
                 </div>
-                <p className="text-white/80 text-sm mt-1">+3% бонусов с каждой покупки</p>
+                <p className="text-white/80 text-sm mt-1">+{LEVELS.nan.percent}% бонусов с каждой покупки</p>
               </div>
             </div>
 
