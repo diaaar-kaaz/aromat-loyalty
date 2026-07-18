@@ -4,13 +4,18 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import BottomNav from '@/components/BottomNav'
+import { LEVELS } from '@/lib/supabase'
+import { saveMyPhone } from '@/lib/session'
 
-const levels = [
-  { icon: '🍞', label: 'Нан',        pct: 3,  threshold: 'Стартовый',      color: '#8B7355' },
-  { icon: '🥐', label: 'Күміс',      pct: 5,  threshold: 'от 20 000 тг',   color: '#A8A9AD' },
-  { icon: '⭐', label: 'Алтын',      pct: 7,  threshold: 'от 50 000 тг',   color: '#C9A84C' },
-  { icon: '👑', label: 'VIP Aromat', pct: 10, threshold: 'от 100 000 тг',  color: '#C46245' },
-]
+const levelIcons: Record<string, string> = { nan: '🍞', kumis: '🥐', altyn: '⭐', vip: '👑' }
+
+const levels = Object.entries(LEVELS).map(([key, lv]) => ({
+  icon: levelIcons[key],
+  label: lv.label,
+  pct: lv.percent,
+  threshold: lv.threshold === 0 ? 'Стартовый' : `от ${lv.threshold.toLocaleString('ru-RU')} тг`,
+  color: lv.color,
+}))
 
 export default function Home() {
   const [phone, setPhone] = useState('')
@@ -28,7 +33,7 @@ export default function Home() {
     setLoading(false)
     if (res.status === 404) { setError('not_found'); return }
     if (!res.ok) { setError('error'); return }
-    localStorage.setItem('my_phone', clean)
+    saveMyPhone(clean)
     router.push(`/client/${clean}`)
   }
 

@@ -99,6 +99,7 @@ function CashierPanel() {
     const res = await fetch(`/api/customers?phone=${phone.replace(/\D/g, '')}`)
     setLoading(false)
     if (res.status === 404) { setError('not_found'); return }
+    if (!res.ok) { setError('server'); return }
     setCustomer(await res.json())
     setStep('found')
   }
@@ -106,13 +107,14 @@ function CashierPanel() {
   async function handleConfirm() {
     if (!customer || !amount) return
     setLoading(true)
+    setError('')
     const res = await fetch('/api/transactions', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ customer_id: customer.id, order_amount: amount, spend_bonus: spendBonus ? maxSpend : 0 }),
     })
     setLoading(false)
-    if (!res.ok) return
+    if (!res.ok) { setError('confirm_failed'); return }
     setResult(await res.json())
     setStep('done')
   }
@@ -186,6 +188,13 @@ function CashierPanel() {
                     <p className="text-red-600 font-medium">Клиент не найден</p>
                     <Link href="/register" className="text-aromat underline text-xs">Зарегистрировать?</Link>
                   </div>
+                </div>
+              )}
+
+              {error === 'server' && (
+                <div className="flex items-center gap-3 bg-red-50 rounded-2xl p-3.5">
+                  <span>⚠️</span>
+                  <p className="text-sm text-red-600 font-medium">Ошибка сервера. Попробуйте ещё раз.</p>
                 </div>
               )}
 
@@ -313,6 +322,13 @@ function CashierPanel() {
                 </div>
               )}
             </div>
+
+            {error === 'confirm_failed' && (
+              <div className="flex items-center gap-3 bg-red-50 rounded-2xl p-3.5">
+                <span>⚠️</span>
+                <p className="text-sm text-red-600 font-medium">Не удалось сохранить чек. Попробуйте ещё раз.</p>
+              </div>
+            )}
 
             <div className="flex gap-3">
               <button onClick={reset} className="w-14 h-14 rounded-2xl border border-gray-200 text-gray-400 text-xl flex items-center justify-center hover:bg-gray-50">

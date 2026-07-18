@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import { Customer, BonusTransaction, LEVELS, getNextLevelThreshold, formatPhone } from '@/lib/supabase'
 import { supabase } from '@/lib/supabase'
+import { saveMyPhone } from '@/lib/session'
 import Link from 'next/link'
 import QRCode from 'react-qr-code'
 import BottomNav from '@/components/BottomNav'
@@ -22,7 +23,7 @@ export default function ClientPage({ params }: { params: { phone: string } }) {
       if (!res.ok) { setNotFound(true); setLoading(false); return }
       const data: Customer = await res.json()
       setCustomer(data)
-      localStorage.setItem('my_phone', params.phone)
+      saveMyPhone(params.phone)
       const { data: txs } = await supabase
         .from('bonus_transactions')
         .select('*')

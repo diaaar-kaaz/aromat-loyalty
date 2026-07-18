@@ -18,13 +18,20 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
   const { phone, name, stamp_category } = await req.json()
-  if (!phone || !name) return NextResponse.json({ error: 'phone and name required' }, { status: 400 })
+  if (!phone || !name || typeof phone !== 'string' || typeof name !== 'string') {
+    return NextResponse.json({ error: 'phone and name required' }, { status: 400 })
+  }
+
+  const digits = phone.replace(/\D/g, '')
+  // Без этого можно зарегистрировать клиента с пустым/мусорным номером,
+  // до которого потом не достучаться ни с кассы, ни из приложения.
+  if (digits.length < 10 || digits.length > 12) {
+    return NextResponse.json({ error: 'invalid_phone' }, { status: 400 })
+  }
 
   // Chosen at registration only. First stamp is free (start at 1) as an acquisition hook.
   const category = isStampCategory(stamp_category) ? stamp_category : null
   const stampCount = category ? 1 : 0
-
-  const digits = phone.replace(/\D/g, '')
   const { data, error } = await supabase
     .from('customers')
     .insert({

@@ -7,6 +7,11 @@ export async function POST(req: NextRequest) {
   if (!customer_id || !order_amount) {
     return NextResponse.json({ error: 'customer_id and order_amount required' }, { status: 400 })
   }
+  // Отрицательная сумма чека уменьшала бы total_spent, а отрицательный
+  // spend_bonus через Math.min УВЕЛИЧИВАЛ бы баланс — эндпоинт открытый.
+  if (typeof order_amount !== 'number' || !Number.isFinite(order_amount) || order_amount <= 0) {
+    return NextResponse.json({ error: 'invalid_order_amount' }, { status: 400 })
+  }
 
   const { data: customer, error: fetchError } = await supabase
     .from('customers')
@@ -16,7 +21,7 @@ export async function POST(req: NextRequest) {
 
   if (fetchError || !customer) return NextResponse.json({ error: 'customer not found' }, { status: 404 })
 
-  const spendAmount = Math.min(spend_bonus || 0, customer.bonus_balance, Math.floor(order_amount * 0.2))
+  const spendAmount = Math.max(0, Math.min(spend_bonus || 0, customer.bonus_balance, Math.floor(order_amount * 0.2)))
   const earnAmount = calcEarnedBonus(order_amount, customer.level)
 
   const newTotalSpent = customer.total_spent + order_amount

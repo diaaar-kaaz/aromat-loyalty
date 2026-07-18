@@ -3,14 +3,22 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useEffect, useState } from 'react'
+import { getMyPhone, MY_PHONE_EVENT } from '@/lib/session'
 
 export default function BottomNav() {
   const pathname = usePathname()
   const [myPhone, setMyPhone] = useState<string | null>(null)
 
   useEffect(() => {
-    setMyPhone(localStorage.getItem('my_phone'))
-  }, [])
+    const update = () => setMyPhone(getMyPhone())
+    update()
+    window.addEventListener(MY_PHONE_EVENT, update)
+    window.addEventListener('storage', update)
+    return () => {
+      window.removeEventListener(MY_PHONE_EVENT, update)
+      window.removeEventListener('storage', update)
+    }
+  }, [pathname])
 
   const tabs = [
     {

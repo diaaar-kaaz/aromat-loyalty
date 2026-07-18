@@ -2,7 +2,8 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import { LEVELS } from '@/lib/supabase'
+import { LEVELS, STAMP_CARDS, StampCategory } from '@/lib/supabase'
+import { saveMyPhone } from '@/lib/session'
 import BottomNav from '@/components/BottomNav'
 
 type Step = 'form' | 'success'
@@ -14,27 +15,41 @@ const levelIcons: Record<string, string> = {
   vip: '👑',
 }
 
+const stampColors: Record<StampCategory, string> = {
+  coffee: '#6F4E37',
+  pastry: '#C46245',
+  dessert: '#C9628A',
+}
+const stampSubtitles: Record<StampCategory, string> = {
+  coffee: '7-й кофе в подарок',
+  pastry: '9-я выпечка в подарок',
+  dessert: '9-й десерт в подарок',
+}
+
 export default function RegisterPage() {
   const [name, setName] = useState('')
   const [phone, setPhone] = useState('')
+  const [stampCategory, setStampCategory] = useState<StampCategory | null>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [step, setStep] = useState<Step>('form')
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
-    if (!name.trim() || !phone.trim()) return
+    if (!name.trim() || !phone.trim() || !stampCategory) return
+    const digits = phone.replace(/\D/g, '')
+    if (digits.length < 10) { setError('Проверьте номер — слишком короткий'); return }
     setLoading(true)
     setError('')
     const res = await fetch('/api/customers', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name: name.trim(), phone }),
+      body: JSON.stringify({ name: name.trim(), phone, stamp_category: stampCategory }),
     })
     setLoading(false)
     if (res.status === 409) { setError('Этот номер уже зарегистрирован'); return }
     if (!res.ok) { setError('Ошибка. Попробуйте снова.'); return }
-    localStorage.setItem('my_phone', phone.replace(/\D/g, ''))
+    saveMyPhone(digits)
     setStep('success')
   }
 
@@ -95,13 +110,48 @@ export default function RegisterPage() {
                 </div>
               </div>
 
+              {/* Stamp card picker — choice is made once, at registration */}
+              <div className="space-y-2">
+                <p className="text-sm font-semibold text-[#2C1810]">Выбери карту — копи штампы, получай в подарок 🎁</p>
+                <p className="text-xs text-gray-400">Выбор делается один раз при регистрации</p>
+                {(Object.keys(STAMP_CARDS) as StampCategory[]).map(key => {
+                  const conf = STAMP_CARDS[key]
+                  const selected = stampCategory === key
+                  const color = stampColors[key]
+                  return (
+                    <button
+                      key={key}
+                      type="button"
+                      onClick={() => { setStampCategory(key); setError('') }}
+                      className="w-full flex items-center gap-3 p-3 rounded-2xl text-left transition-colors"
+                      style={{
+                        background: selected ? `${color}1A` : '#F6F4F2',
+                        border: selected ? `1.5px solid ${color}80` : '1.5px solid transparent',
+                      }}
+                    >
+                      <span className="text-2xl">{conf.icon}</span>
+                      <span className="flex-1">
+                        <span className="block text-sm font-bold text-[#2C1810]">{conf.label}</span>
+                        <span className="block text-xs text-gray-400">{stampSubtitles[key]}</span>
+                      </span>
+                      <span
+                        className="w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0"
+                        style={{ borderColor: selected ? color : '#d1d5db', background: selected ? color : 'transparent' }}
+                      >
+                        {selected && <span className="text-white text-[11px] font-bold">✓</span>}
+                      </span>
+                    </button>
+                  )
+                })}
+              </div>
+
               {error && (
                 <div className="bg-red-50 rounded-2xl p-3 text-sm text-red-500 text-center">{error}</div>
               )}
 
               <button
                 type="submit"
-                disabled={loading || !name || !phone}
+                disabled={loading || !name || !phone || !stampCategory}
                 className="w-full py-4 rounded-2xl font-bold text-white text-base disabled:opacity-40"
                 style={{ background: 'linear-gradient(135deg, #C46245, #E8956D)' }}
               >
@@ -127,6 +177,12 @@ export default function RegisterPage() {
                 </div>
                 <p className="text-white/80 text-sm mt-1">+{LEVELS.nan.percent}% бонусов с каждой покупки</p>
               </div>
+
+              {stampCategory && (
+                <p className="mt-3 text-white/80 text-sm">
+                  {STAMP_CARDS[stampCategory].icon} Карта «{STAMP_CARDS[stampCategory].label}»: первый штамп уже твой!
+                </p>
+              )}
             </div>
 
             <div className="bg-white rounded-3xl p-5 shadow-sm text-center space-y-2">
