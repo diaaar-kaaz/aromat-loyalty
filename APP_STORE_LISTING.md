@@ -124,12 +124,33 @@ Aromat наубайханасы, Астана · @aromatbakery
    (например, +7 777 000 00 01), выберите тип карты.
 2. Либо найдите существующего клиента по номеру: +7 777 000 77 66
 
-Касса и админ-панель в этом (клиентском) приложении отсутствуют.
+Касса в этом (клиентском) приложении отсутствует.
 Данные хранятся на нашем сервере, приложение работает по HTTPS.
+
+Уведомления: после регистрации приложение предлагает включить уведомления
+о свежей выпечке. Согласие запрашивается явно, отключить можно в личном
+кабинете («Мой бонус» → переключатель «Уведомления о свежей выпечке»).
+
+Служебный экран для персонала пекарни (рассылка уведомлений):
+долгое нажатие (~1,5 сек) на надпись «AROMAT» в шапке вкладки «Главная»,
+далее пароль администратора: <ВПИСАТЬ ПАРОЛЬ ЗДЕСЬ В App Store Connect>
+Клиентам этот экран недоступен — без пароля он ничего не показывает.
 ```
 ```
 The app is a loyalty program for Aromat bakery. Login is by phone number,
 no password / SMS required. To test: register a new card on the Home tab
 with any phone number and pick a card type; or look up existing test
-customer +7 777 000 77 66. This client app has no cashier/admin panels.
+customer +7 777 000 77 66. This client app has no cashier panel.
+
+Notifications: after registration the app asks for permission to send
+"fresh pastry" notifications. Consent is explicit and users can opt out
+in the app ("Мой бонус" tab → "Уведомления о свежей выпечке" toggle).
+
+Staff-only screen (sending notifications): long-press (~1.5s) the "AROMAT"
+title in the Home tab header, then enter the admin password:
+<ENTER PASSWORD HERE IN App Store Connect>
+It is password-protected and shows nothing to regular customers.
 ```
+
+> ⚠️ Пароль администратора НЕ вписывать в этот файл — репозиторий публичный.
+> Подставить его прямо в поле App Review Notes в App Store Connect.
